@@ -2,7 +2,7 @@ def print_grid(grid):
     for row in reversed(grid):  # The grid is reversed for display (0,0 at bottom left)
         print(' '.join(row))
 
-def simulate_grain(grid, inlet, grain_out_of_bounds):
+def simulate_grain(grid, inlet, simulation_finished):
     x, y = inlet
     while True:
         below = (x, y - 1)
@@ -15,8 +15,11 @@ def simulate_grain(grid, inlet, grain_out_of_bounds):
                       (below_left is None or grid[below_left[1]][below_left[0]] != '.')):
             # ... and if the grain will move out of bounds after falling further
             if (y == 0 or below_right is None or below_left is None):
-                grain_out_of_bounds = True
-                grid[y][x] = '.'  # Remove the grain from the current position
+                simulation_finished = True
+                grid[y][x] = '.'  # Remove the grain from the current position (because it will fall out of the map)
+            elif ((x, y) == inlet):
+                grid[y][x] = 'o'
+                simulation_finished = True
             break
 
         grid[y][x] = '.'  # Remove the grain from the current position before placing it somewhere else
@@ -33,9 +36,9 @@ def simulate_grain(grid, inlet, grain_out_of_bounds):
             x -= 1
             y -= 1
 
-        grid[y][x] = 'o'  # Place the grain in the new position
+        grid[y][x] = 'o'
 
-    return (grid, grain_out_of_bounds)
+    return (grid, simulation_finished)
 
 # Initialize grid and parameters
 width, height = 9, 7
@@ -48,12 +51,13 @@ for (wx, wy) in walls:
     grid[wy][wx] = '#'
 
 # Simulate the grain falling
-grain_out_of_bounds = False
-while not grain_out_of_bounds:
-    grid, grain_out_of_bounds = simulate_grain(grid, inlet, grain_out_of_bounds)
+simulation_finished = False
+while not simulation_finished:
+    grid, simulation_finished = simulate_grain(grid, inlet, simulation_finished)
 
-# Place the inlet on the grid
-grid[inlet[1]][inlet[0]] = '+'
+# Place the inlet on the grid (if not occupied by a grain)
+if (grid[inlet[1]][inlet[0]] != 'o'):
+    grid[inlet[1]][inlet[0]] = '+'
 
 # Count sand grains
 sand_count = sum(row.count('o') for row in grid)
